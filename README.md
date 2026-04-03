@@ -170,13 +170,13 @@ To run two instances of `backend-service` on different ports in STS:
 
 1. Right-click `backend-service` → `Run As → Run Configurations…`
 2. Select **Spring Boot App** → click the **New** button (duplicate icon).
-3. Name it `backend-service-8081`.
+3. Name it `backend-service-8085`.
 4. Go to the **Arguments** tab → **VM arguments**:
    ```
-   -Dserver.port=8081
+   -Dserver.port=8085
    ```
 5. Click **Apply**, then **Run**.
-6. Repeat steps 2–5, name it `backend-service-8082`, and set port `8082`.
+6. Repeat steps 2–5, name it `backend-service-8092`, and set port `8092`.
 7. Both instances appear in the Spring Boot Dashboard. Start `client-service` last.
 
 ### 6. Viewing Logs
@@ -189,7 +189,8 @@ To run two instances of `backend-service` on different ports in STS:
 
 Patterns 06 (CQRS) and 07 (Event Sourcing) use an in-memory H2 database.
 
-- URL: `http://localhost:8080/h2-console`
+- Pattern 06 (CQRS) URL: `http://localhost:8081/h2-console`
+- Pattern 07 (Event Sourcing) URL: `http://localhost:8080/h2-console`
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `sa` | Password: *(leave blank)*
 
@@ -271,22 +272,22 @@ Set `Content-Type: application/json` as a header for all POST/PUT requests.
 
 ### Pattern 02 – API Gateway
 
-> Start order: `user-service` (8081) → `product-service` (8082) → `api-gateway` (8080)
+> Start order: `user-service` (8091) → `product-service` (8081) → `api-gateway` (8084)
 
 **1. Get all users via gateway**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/api/users` |
-| Expected | `200 OK` — JSON array of users (routed to user-service:8081) |
+| URL | `http://localhost:8084/api/users` |
+| Expected | `200 OK` — JSON array of users (routed to user-service:8091) |
 
 **2. Get user by ID via gateway**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/api/users/1` |
+| URL | `http://localhost:8084/api/users/1` |
 | Expected | `200 OK` — single user JSON |
 
 **3. Get all products via gateway**
@@ -294,15 +295,15 @@ Set `Content-Type: application/json` as a header for all POST/PUT requests.
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/api/products` |
-| Expected | `200 OK` — JSON array of products (routed to product-service:8082) |
+| URL | `http://localhost:8084/api/products` |
+| Expected | `200 OK` — JSON array of products (routed to product-service:8081) |
 
 **4. Get product by ID via gateway**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/api/products/1` |
+| URL | `http://localhost:8084/api/products/1` |
 | Expected | `200 OK` — single product JSON |
 
 **5. Verify custom request-ID header**
@@ -313,14 +314,14 @@ After sending any request above, check the **Response Headers** panel in Postman
 
 ### Pattern 03 – Circuit Breaker
 
-> Start: `payment-service` (8080)
+> Start: `payment-service` (8083)
 
 **1. Process a payment (circuit CLOSED – normal flow)**
 
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/payments` |
+| URL | `http://localhost:8083/payments` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"orderId": "ORDER-001", "amount": 99.99, "currency": "USD"}` |
 | Expected | `200 OK` — payment result JSON |
@@ -330,7 +331,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/payments/1` |
+| URL | `http://localhost:8083/payments/1` |
 | Expected | `200 OK` — payment details JSON |
 
 **3. Trigger repeated failures to open the circuit**
@@ -338,7 +339,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/payments/test-failure` |
+| URL | `http://localhost:8083/payments/test-failure` |
 | Expected | `200 OK` with a fallback message the first few times; after enough failures the circuit opens and subsequent calls immediately return the fallback without hitting the downstream |
 
 **4. Check circuit breaker state**
@@ -346,7 +347,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/actuator/health` |
+| URL | `http://localhost:8083/actuator/health` |
 | Expected | `200 OK` — JSON showing `circuitBreakers` status (`CLOSED`, `OPEN`, or `HALF_OPEN`) |
 
 > **Scenario tip:** Send request 3 six or more times rapidly in Postman using the **Runner** (Collections → Run). After `failureRateThreshold` is exceeded you will see the circuit flip to `OPEN` in the health endpoint.
@@ -355,7 +356,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 
 ### Pattern 04 – Config Server
 
-> Start order: `config-server` (8888) → `config-client` (8080)
+> Start order: `config-server` (8888) → `config-client` (8087)
 
 **1. Read raw config from Config Server**
 
@@ -370,7 +371,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/config` |
+| URL | `http://localhost:8087/config` |
 | Expected | `200 OK` — JSON showing the properties injected from the config server |
 
 **3. Hot-reload config without restart**
@@ -381,7 +382,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/actuator/refresh` |
+| URL | `http://localhost:8087/actuator/refresh` |
 | Expected | `200 OK` — JSON array listing the changed property keys |
 
 3. Re-send request 2 above and verify the updated value is returned.
@@ -390,14 +391,14 @@ After sending any request above, check the **Response Headers** panel in Postman
 
 ### Pattern 05 – Saga Pattern
 
-> Start order: `inventory-service` (8082) → `payment-service` (8081) → `order-service` (8080)
+> Start order: `inventory-service` (8088) → `payment-service` (8083) → `order-service` (8082)
 
 **1. Place an order (triggers full saga: payment + inventory reservation)**
 
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/orders` |
+| URL | `http://localhost:8082/orders` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"productId": 1, "quantity": 2, "customerId": "CUST-001", "amount": 199.98}` |
 | Expected | `200 OK` — order JSON with status `CONFIRMED` |
@@ -407,7 +408,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/orders/1` |
+| URL | `http://localhost:8082/orders/1` |
 | Expected | `200 OK` — order with status `CONFIRMED` |
 
 **3. Get all orders**
@@ -415,7 +416,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/orders` |
+| URL | `http://localhost:8082/orders` |
 | Expected | `200 OK` — JSON array of orders |
 
 **4. Check payment record**
@@ -423,7 +424,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8081/payments` |
+| URL | `http://localhost:8083/payments` |
 | Expected | `200 OK` — payment record for the order above |
 
 **5. Check inventory reservation**
@@ -431,7 +432,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8082/inventory/1` |
+| URL | `http://localhost:8088/inventory/1` |
 | Expected | `200 OK` — inventory record showing reduced stock |
 
 **6. Saga failure scenario (insufficient stock)**
@@ -439,7 +440,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/orders` |
+| URL | `http://localhost:8082/orders` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"productId": 1, "quantity": 9999, "customerId": "CUST-002", "amount": 99999.00}` |
 | Expected | Order status should be `CANCELLED` and payment refunded (compensating transaction triggered) |
@@ -448,14 +449,14 @@ After sending any request above, check the **Response Headers** panel in Postman
 
 ### Pattern 06 – CQRS
 
-> Start: `product-service` (8080)
+> Start: `product-service` (8081)
 
 **1. Create a product (Command)**
 
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/commands/products` |
+| URL | `http://localhost:8081/commands/products` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"name": "Gaming Mouse", "description": "High DPI mouse", "price": 59.99, "stock": 100}` |
 | Expected | `200 OK` — created product JSON with generated `id` |
@@ -465,7 +466,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | PUT |
-| URL | `http://localhost:8080/commands/products/1` |
+| URL | `http://localhost:8081/commands/products/1` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"name": "Gaming Mouse Pro", "description": "Updated model", "price": 69.99, "stock": 80}` |
 | Expected | `200 OK` — updated product JSON |
@@ -475,7 +476,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/queries/products` |
+| URL | `http://localhost:8081/queries/products` |
 | Expected | `200 OK` — JSON array of all products |
 
 **4. Get product by ID (Query)**
@@ -483,7 +484,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/queries/products/1` |
+| URL | `http://localhost:8081/queries/products/1` |
 | Expected | `200 OK` — single product JSON |
 
 **5. Search products by name (Query)**
@@ -491,7 +492,7 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/queries/products/search?name=Mouse` |
+| URL | `http://localhost:8081/queries/products/search?name=Mouse` |
 | Expected | `200 OK` — JSON array of matching products |
 
 **6. Delete a product (Command)**
@@ -499,14 +500,14 @@ After sending any request above, check the **Response Headers** panel in Postman
 | Field | Value |
 |-------|-------|
 | Method | DELETE |
-| URL | `http://localhost:8080/commands/products/1` |
+| URL | `http://localhost:8081/commands/products/1` |
 | Expected | `200 OK` or `204 No Content` |
 
 **7. Verify deletion (Query)**
 
 Re-send request 4 (`GET /queries/products/1`) — expected `404 Not Found`.
 
-**H2 Console:** Open `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:testdb`, user: `sa`, password: blank) to inspect the `PRODUCT` table directly.
+**H2 Console:** Open `http://localhost:8081/h2-console` (JDBC URL: `jdbc:h2:mem:testdb`, user: `sa`, password: blank) to inspect the `PRODUCT` table directly.
 
 ---
 
@@ -566,14 +567,14 @@ Re-send request 4 (`GET /queries/products/1`) — expected `404 Not Found`.
 
 ### Pattern 08 – Bulkhead Pattern
 
-> Start: `order-service` (8080)
+> Start: `order-service` (8082)
 
 **1. Process a single order (normal flow)**
 
 | Field | Value |
 |-------|-------|
 | Method | POST |
-| URL | `http://localhost:8080/orders` |
+| URL | `http://localhost:8082/orders` |
 | Headers | `Content-Type: application/json` |
 | Body (raw JSON) | `{"productId": 1, "quantity": 2, "customerId": "CUST-001"}` |
 | Expected | `200 OK` — order JSON |
@@ -583,7 +584,7 @@ Re-send request 4 (`GET /queries/products/1`) — expected `404 Not Found`.
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/orders` |
+| URL | `http://localhost:8082/orders` |
 | Expected | `200 OK` — JSON array of orders |
 
 **3. Check bulkhead health**
@@ -591,7 +592,7 @@ Re-send request 4 (`GET /queries/products/1`) — expected `404 Not Found`.
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/actuator/health` |
+| URL | `http://localhost:8082/actuator/health` |
 | Expected | `200 OK` — JSON health showing bulkhead metrics |
 
 **4. Trigger bulkhead saturation (Postman Runner)**
@@ -606,14 +607,14 @@ Use Postman's **Collection Runner** to send the POST `/orders` request 20 times 
 
 ### Pattern 09 – Distributed Tracing
 
-> Start order: `service-b` (8081) → `service-a` (8080)
+> Start order: `service-b` (8090) → `service-a` (8089)
 
 **1. Call service-a (which internally calls service-b)**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/service-a/call` |
+| URL | `http://localhost:8089/service-a/call` |
 | Expected | `200 OK` — response from service-b, propagated back through service-a |
 
 **2. Direct call to service-b**
@@ -621,7 +622,7 @@ Use Postman's **Collection Runner** to send the POST `/orders` request 20 times 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8081/service-b/info` |
+| URL | `http://localhost:8090/service-b/info` |
 | Expected | `200 OK` — service-b info response |
 
 **3. Verify trace propagation in STS Console**
@@ -639,32 +640,32 @@ Both services share the same `traceId` (`abc123def456`) — confirming end-to-en
 
 ### Pattern 10 – Load Balancer
 
-> Start order: `backend-service` on port 8081 → `backend-service` on port 8082 → `client-service` (8080)
+> Start order: `backend-service` on port 8085 → `backend-service` on port 8092 → `client-service` (8086)
 
 **1. Load-balanced call through client-service**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8080/client/call` |
+| URL | `http://localhost:8086/client/call` |
 | Expected | `200 OK` — response from one of the backend instances (note the instance ID or port in the response body) |
 
 **2. Repeat 4 more times and observe round-robin**
 
-Send the same request 5 times (use Postman Runner). The response should alternate between `instance-8081` and `instance-8082`, confirming round-robin load balancing.
+Send the same request 5 times (use Postman Runner). The response should alternate between `instance-8085` and `instance-8092`, confirming round-robin load balancing.
 
 **3. Direct call to backend instance 1**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8081/backend/info` |
-| Expected | `200 OK` — instance info showing port `8081` |
+| URL | `http://localhost:8085/backend/info` |
+| Expected | `200 OK` — instance info showing port `8085` |
 
 **4. Direct call to backend instance 2**
 
 | Field | Value |
 |-------|-------|
 | Method | GET |
-| URL | `http://localhost:8082/backend/info` |
-| Expected | `200 OK` — instance info showing port `8082` |
+| URL | `http://localhost:8092/backend/info` |
+| Expected | `200 OK` — instance info showing port `8092` |

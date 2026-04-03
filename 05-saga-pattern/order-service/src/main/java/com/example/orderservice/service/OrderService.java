@@ -50,7 +50,7 @@ public class OrderService {
         paymentRequest.put("orderId", order.getId());
         paymentRequest.put("customerId", order.getCustomerId());
         paymentRequest.put("amount", order.getAmount());
-        restTemplate.postForObject("http://localhost:8081/payments", paymentRequest, Map.class);
+        restTemplate.postForObject("http://localhost:8083/payments", paymentRequest, Map.class);
     }
 
     private void reserveInventory(Order order) {
@@ -58,20 +58,20 @@ public class OrderService {
         inventoryRequest.put("orderId", order.getId());
         inventoryRequest.put("productId", order.getProductId());
         inventoryRequest.put("quantity", order.getQuantity());
-        restTemplate.postForObject("http://localhost:8082/inventory/reserve", inventoryRequest, Map.class);
+        restTemplate.postForObject("http://localhost:8088/inventory/reserve", inventoryRequest, Map.class);
     }
 
     private void compensate(Order order) {
         try {
             restTemplate.postForObject(
-                "http://localhost:8081/payments/refund/" + order.getId(), null, Void.class);
+                "http://localhost:8083/payments/refund/" + order.getId(), null, Void.class);
             log.info("Compensation: Payment refunded for order {}", order.getId());
         } catch (Exception e) {
             log.error("Compensation failed - refund: {}", e.getMessage());
         }
         try {
             restTemplate.postForObject(
-                "http://localhost:8082/inventory/release/" + order.getId(), null, Void.class);
+                "http://localhost:8088/inventory/release/" + order.getId(), null, Void.class);
             log.info("Compensation: Inventory released for order {}", order.getId());
         } catch (Exception e) {
             log.error("Compensation failed - inventory release: {}", e.getMessage());

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8084
 
 spring:
   application:
@@ -8,13 +8,13 @@ spring:
     gateway:
       routes:
         - id: user-service
-          uri: http://localhost:8081
+          uri: http://localhost:8091
           predicates:
             - Path=/api/users/**
           filters:
             - StripPrefix=1
         - id: product-service
-          uri: http://localhost:8082
+          uri: http://localhost:8081
           predicates:
             - Path=/api/products/**
           filters:
