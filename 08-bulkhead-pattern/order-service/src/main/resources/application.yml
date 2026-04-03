@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: order-service-bulkhead
+
+resilience4j:
+  bulkhead:
+    instances:
+      paymentService:
+        max-concurrent-calls: 5
+        max-wait-duration: 100ms
+      inventoryService:
+        max-concurrent-calls: 5
+        max-wait-duration: 100ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,bulkheads
+  endpoint:
+    health:
+      show-details: always
+  health:
+    bulkheads:
+      enabled: true
