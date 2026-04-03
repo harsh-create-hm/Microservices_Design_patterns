@@ -1,0 +1,13 @@
+app:
+  message: "Hello from Config Server!"
+  version: "1.0.0"
+  environment: "development"
+
+feature:
+  enabled: true
+  max-retries: 3
+  timeout-ms: 5000
+
+database:
+  pool-size: 10
+  connection-timeout: 30000
