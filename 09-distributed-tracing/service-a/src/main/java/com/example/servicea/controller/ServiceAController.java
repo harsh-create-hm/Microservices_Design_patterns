@@ -23,7 +23,7 @@ public class ServiceAController {
 
         // traceId is automatically propagated via HTTP headers by Micrometer
         Map<?, ?> serviceBResponse = restTemplate.getForObject(
-            "http://localhost:8081/service-b/info", Map.class);
+            "http://localhost:8090/service-b/info", Map.class);
 
         log.info("Service A: Got response from Service B");
         return Map.of(
